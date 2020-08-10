@@ -1,0 +1,49 @@
+plugins {
+    id 'java'
+}
+
+group 'net.minestom.lwjglexample'
+version '1.0'
+
+repositories {
+    mavenCentral()
+    maven { url 'https://libraries.minecraft.net' }
+    maven { url 'https://jitpack.io' } // to access packages from GitHub
+}
+
+// If you depend on LWJGL, you need to provide the version and OS
+// Check Minestom's build.gradle file if you need to check which version is currently used in case you come across conflicts
+project.ext.lwjglVersion = "3.2.3"
+
+switch (org.gradle.internal.os.OperatingSystem.current()) {
+    case org.gradle.internal.os.OperatingSystem.LINUX:
+        def osArch = System.getProperty("os.arch")
+        project.ext.lwjglNatives = osArch.startsWith("arm") || osArch.startsWith("aarch64")
+                ? "natives-linux-${osArch.contains("64") || osArch.startsWith("armv8") ? "arm64" : "arm32"}"
+                : "natives-linux"
+        break
+    case org.gradle.internal.os.OperatingSystem.MAC_OS:
+        project.ext.lwjglNatives = "natives-macos"
+        break
+    case org.gradle.internal.os.OperatingSystem.WINDOWS:
+        project.ext.lwjglNatives = System.getProperty("os.arch").contains("64") ? "natives-windows" : "natives-windows-x86"
+        break
+}
+
+dependencies {
+    implementation platform("org.lwjgl:lwjgl-bom:$lwjglVersion")
+    runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-opengles::$lwjglNatives"
+    runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
+
+    implementation "com.github.Minestom:Minestom:${project.minestom_version}" // declare Minestom as dependency
+    implementation "com.github.Minestom:Minestom:${project.minestom_version}:lwjgl" // declare Minestom LWJGL code as dependency
+
+    // declare use of Minestom LWJGL-related code (parentheses are required here for the build script to be parsed correctly)
+    implementation("com.github.Minestom:Minestom:${project.minestom_version}") {
+        capabilities {
+            requireCapability("net.minestom.server:Minestom-lwjgl")
+        }
+    }
+}
